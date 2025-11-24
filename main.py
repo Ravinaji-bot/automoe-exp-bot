@@ -5,20 +5,23 @@ from telebot import TeleBot, types
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 bot = TeleBot(BOT_TOKEN)
 
+
 def edit_video(input_path, output_path):
     cmd = [
         "ffmpeg",
+        "-y",
         "-i", input_path,
-        "-vf", "crop=in_w:in_h-80:0:40,eq=contrast=1.2:brightness=0.02:saturation=1.1",
-        "-af", "atempo=1.02,firequalizer=gain_entry='entry(100,5)'",
+        "-vf", "crop=in_w:in_h-80:0:40",
+        "-af", "atempo=1.02",
         "-preset", "fast",
         output_path
     ]
     subprocess.run(cmd)
 
+
 @bot.message_handler(content_types=['video'])
 def video_handler(message):
-    msg = bot.reply_to(message, "⏳ *Editing your video... Please wait!*", parse_mode="Markdown")
+    msg = bot.reply_to(message, "⏳ Video processing...")
 
     file_info = bot.get_file(message.video.file_id)
     downloaded = bot.download_file(file_info.file_path)
@@ -31,6 +34,8 @@ def video_handler(message):
 
     edit_video(input_path, output_path)
 
-    bot.send_video(message.chat.id, open(output_path, "rb"), caption="✅ *Edited Successfully!*", parse_mode="Markdown")
+    bot.send_video(message.chat.id, video=open(output_path, "rb"))
 
-bot.polling()
+
+if __name__ == "__main__":
+    bot.infinity_polling()
